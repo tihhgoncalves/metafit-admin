@@ -1,5 +1,8 @@
 RewriteEngine On
 
+RewriteRule ^users/new/?$ user.php?novo=1 [QSA,L]
+RewriteRule ^users/([a-f0-9]{24})/?$ user.php?id=$1 [QSA,L,NC]
+
 # Serve pages PHP without exposing their extension in the public URL.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
