@@ -1,0 +1,3 @@
+@use 'variables' as *;
+// Fonte SCSS do painel. Compile este arquivo para ../css/style.css.
+body { color: $ink; background: $canvas; }
