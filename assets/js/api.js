@@ -1,14 +1,11 @@
 window.MetaFitApi = (() => {
   const tokenKey = 'metafit_admin_token';
   const userKey = 'metafit_admin_user';
-  const request = ({ method = 'GET', path, data, authenticated = true }) => $.ajax({
-    url: `${window.METAFIT_CONFIG.apiUrl}${path}`,
-    method,
-    contentType: 'application/json',
-    dataType: 'json',
-    data: data ? JSON.stringify(data) : undefined,
-    headers: authenticated && localStorage.getItem(tokenKey) ? { Authorization: `Bearer ${localStorage.getItem(tokenKey)}` } : {}
-  });
+  const request = ({ method = 'GET', path, data, authenticated = true }) => {
+    const operation = $.ajax({ url: `${window.METAFIT_CONFIG.apiUrl}${path}`, method, contentType: 'application/json', dataType: 'json', data: data ? JSON.stringify(data) : undefined, headers: authenticated && localStorage.getItem(tokenKey) ? { Authorization: `Bearer ${localStorage.getItem(tokenKey)}` } : {} });
+    if (authenticated) operation.fail((error) => { if (error.status === 401 || error.status === 403) { clearSession(); window.location.replace('/login'); } });
+    return operation;
+  };
   const messageFrom = (error) => error.responseJSON?.message || 'Não foi possível concluir a operação. Tente novamente.';
   const saveSession = ({ token, user }) => { localStorage.setItem(tokenKey, token); localStorage.setItem(userKey, JSON.stringify(user)); };
   const clearSession = () => { localStorage.removeItem(tokenKey); localStorage.removeItem(userKey); };
