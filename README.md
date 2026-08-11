@@ -13,3 +13,7 @@ Para permitir o navegador, configure `CORS_ORIGIN` da API com a origem do painel
 ## Estilos
 
 Os fontes SCSS ficam em `assets/scss/` e o CSS compilado em `assets/css/style.css`.
+
+## Deploy
+
+O workflow do GitHub Actions em `.github/workflows/deploy.yml` é executado a cada push para `main` (ou manualmente). Ele compila os estilos e publica o painel em `/public_html/admin/` via FTP, usando os secrets `FTP_HOST`, `FTP_USER` e `FTP_PASSWORD`.

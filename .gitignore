@@ -1,0 +1,6 @@
+node_modules/
+assets/css/style.css
+.env
+.DS_Store
+.idea/
+.vscode/
