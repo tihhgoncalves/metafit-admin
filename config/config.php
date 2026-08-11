@@ -4,7 +4,7 @@ declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-$environmentPath = __DIR__ . '/.env';
+$environmentPath = dirname(__DIR__) . '/.env';
 if (!is_file($environmentPath)) {
   http_response_code(500);
   echo json_encode(['error' => 'Configuração de ambiente ausente.']);
