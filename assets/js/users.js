@@ -6,6 +6,7 @@ $(function () {
   const dateFormatter = (cell) => { const value = cell.getValue(); return value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '—'; };
   const lastWhatsAppMessageFormatter = (cell) => { const value = cell.getValue(); return value ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : 'Sem mensagens'; };
   const badge = (cell, type) => `<span class="badge badge-${type}-${cell.getValue()}">${cell.getValue().replace('_', ' ')}</span>`;
+  const situationFormatter = (cell) => { const situation = badge(cell, 'status'); const expiresAt = cell.getData().expira_em; if (cell.getValue() !== 'ativo' || !expiresAt) return situation; const days = Math.max(0, Math.ceil((new Date(expiresAt) - new Date()) / 86400000)); return `<div>${situation}<small class="d-block text-muted mt-1">${days} ${days === 1 ? 'dia restante' : 'dias restantes'}</small></div>`; };
   let editingUserId = null;
   const resetUserForm = () => { editingUserId = null; $('#user-form')[0].reset(); $('#user-form').removeClass('was-validated'); $('#user-alert').addClass('d-none'); $('#user-modal .eyebrow').text('NOVO CADASTRO'); $('#user-modal .modal-title').text('Adicionar usuário'); $('#user-senha').prop('required', true).closest('.col-md-6').show(); $('#user-tipo').val('usuario').trigger('change'); $('#user-submit').text('Cadastrar usuário'); };
   const openUserEditor = (user) => window.location.assign(`/users/${user.id}`);
@@ -14,7 +15,7 @@ $(function () {
     { title: 'WHATSAPP', field: 'whatsapp', minWidth: 150, formatter: (cell) => cell.getValue() || '—' },
     { title: 'ÚLTIMA MENSAGEM', field: 'ultima_mensagem_whatsapp_em', width: 175, formatter: lastWhatsAppMessageFormatter },
     { title: 'PERFIL', field: 'tipo', width: 125, formatter: (cell) => badge(cell, 'role') },
-    { title: 'SITUAÇÃO', field: 'situacao', width: 180, formatter: (cell) => badge(cell, 'status') },
+    { title: 'SITUAÇÃO', field: 'situacao', width: 180, formatter: situationFormatter },
     { title: 'CADASTRADO EM', field: 'created_at', width: 155, formatter: dateFormatter },
     { title: '', width: 72, hozAlign: 'right', headerSort: false, formatter: () => '<button class="btn btn-sm btn-outline-secondary" type="button" title="Editar usuário" aria-label="Editar usuário"><i class="bi bi-pencil"></i></button>', cellClick: (_event, cell) => openUserEditor(cell.getRow().getData()) }
   ] });
