@@ -12,7 +12,7 @@ Para permitir o navegador, configure `CORS_ORIGIN` da API com a origem do painel
 
 ## Estilos
 
-Os fontes SCSS ficam em `assets/scss/` e o CSS compilado em `assets/css/style.css`.
+Os fontes SCSS ficam em `assets/scss/` e o CSS compilado em `assets/css/style.css`. As páginas PHP ficam em `pages/` e a leitura do ambiente em `config/`.
 
 ## Deploy
 
