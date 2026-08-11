@@ -1,0 +1,12 @@
+{
+  "name": "metafit/admin",
+  "description": "Painel administrativo do MetaFit.",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.2"
+  },
+  "config": {
+    "sort-packages": true
+  }
+}

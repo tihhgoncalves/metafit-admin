@@ -16,6 +16,6 @@ Os fontes SCSS ficam em `assets/scss/` e o CSS compilado em `assets/css/style.cs
 
 ## Deploy
 
-O workflow do GitHub Actions em `.github/workflows/deploy.yml` é executado a cada push para `main` (ou manualmente). Ele compila os estilos e publica o painel em `/public_html/admin/` via FTP, usando os secrets `FTP_HOST`, `FTP_USER` e `FTP_PASSWORD`.
+O workflow do GitHub Actions em `.github/workflows/deploy.yml` é executado a cada push para `main` (ou manualmente). Ele instala as dependências PHP com Composer, compila os estilos e publica o painel em `/public_html/admin/` via FTP, usando os secrets `FTP_HOST`, `FTP_USER` e `FTP_PASSWORD`.
 
 Após o primeiro deploy, crie o arquivo `.env` em `/public_html/admin/` com `NODE_ENV=production` e `METAFIT_API_URL` apontando para a API do ambiente. Esse arquivo não é publicado nem versionado.
