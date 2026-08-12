@@ -3,8 +3,17 @@ $(function () {
   const currentUser = MetaFitApi.currentUser();
   $('#user-name').text(currentUser.nome); $('#user-initials').text(currentUser.nome.split(/\s+/).slice(0, 2).map((name) => name[0]).join('').toUpperCase());
   $('.sidebar-bottom').html('<div class="dropdown"><button id="account-menu-toggle" class="btn account-menu-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Abrir menu da conta"><i class="bi bi-person"></i></button><ul class="dropdown-menu dropdown-menu-end account-menu"><li><button class="dropdown-item" type="button"><i class="bi bi-person me-2"></i>Minha Conta</button></li><li><hr class="dropdown-divider"></li><li><button id="logout-button" class="dropdown-item account-logout" type="button"><i class="bi bi-box-arrow-right me-2"></i>Sair</button></li></ul></div>');
-  const dateFormatter = (cell) => { const value = cell.getValue(); return value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '—'; };
-  const lastWhatsAppMessageFormatter = (cell) => { const value = cell.getValue(); return value ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : 'Sem mensagens'; };
+  const fullDate = (value) => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+  const relativeDate = (value) => {
+    const minutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000));
+    const days = Math.floor(minutes / 1440); const hours = Math.floor((minutes % 1440) / 60); const remainingMinutes = minutes % 60;
+    if (days) return `há ${days} ${days === 1 ? 'dia' : 'dias'}${hours ? ` e ${hours} ${hours === 1 ? 'hora' : 'horas'}` : ''}`;
+    if (hours) return `há ${hours} ${hours === 1 ? 'hora' : 'horas'}${remainingMinutes ? ` e ${remainingMinutes} min` : ''}`;
+    return minutes < 1 ? 'agora mesmo' : `há ${minutes} min`;
+  };
+  const relativeDateFormatter = (emptyLabel = '—') => (cell) => { const value = cell.getValue(); return value ? `<span title="${fullDate(value)}">${relativeDate(value)}</span>` : emptyLabel; };
+  const dateFormatter = relativeDateFormatter();
+  const lastWhatsAppMessageFormatter = relativeDateFormatter('Sem mensagens');
   const badge = (cell, type) => `<span class="badge badge-${type}-${cell.getValue()}">${cell.getValue().replace('_', ' ')}</span>`;
   const situationFormatter = (cell) => { const situation = badge(cell, 'status'); const expiresAt = cell.getData().expira_em; if (cell.getValue() !== 'ativo' || !expiresAt) return situation; const days = Math.max(0, Math.ceil((new Date(expiresAt) - new Date()) / 86400000)); return `<div>${situation}<small class="d-block text-muted mt-1">${days} ${days === 1 ? 'dia restante' : 'dias restantes'}</small></div>`; };
   let editingUserId = null;
