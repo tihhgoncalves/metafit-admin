@@ -18,7 +18,7 @@ $(function () {
   $('<style>body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,Cantarell,"Noto Sans",sans-serif,"Helvetica Neue","Liberation Sans",Arial,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"}.system-footer{position:fixed;right:24px;bottom:18px;z-index:10;color:#717171;font:10px "DM Mono",monospace;letter-spacing:.01em}.system-footer a{color:inherit;text-decoration:none}.system-footer a:hover{color:#e7236d}.app-page .system-footer{right:32px}.auth-page .system-footer{right:auto;left:calc((100% - 33.333%) / 2);transform:translateX(-50%)}@media(max-width:900px){.auth-page .system-footer{left:50%}}</style>').appendTo('head');
   const footer = $('<footer class="system-footer">© Todos os direitos reservados a <a href="https://rocketprodutora.com.br" target="_blank" rel="noopener">Rocket Produtora Digital</a> · <span class="system-version"></span></footer>').appendTo('body');
 
-  $.getJSON('package.json')
+  $.getJSON(new URL('../../package.json', document.currentScript.src))
     .done((manifest) => footer.find('.system-version').text(`v${manifest.version}`))
     .fail(() => footer.find('.system-version').text('v—'));
 });
