@@ -14,7 +14,8 @@ $(function () {
   const relativeDateFormatter = (emptyLabel = '—') => (cell) => { const value = cell.getValue(); return value ? `<span title="${fullDate(value)}">${relativeDate(value)}</span>` : emptyLabel; };
   const dateFormatter = relativeDateFormatter();
   const lastWhatsAppMessageFormatter = relativeDateFormatter('Sem mensagens');
-  const badge = (cell, type) => `<span class="badge badge-${type}-${cell.getValue()}">${cell.getValue().replace('_', ' ')}</span>`;
+  const statusLabel = (value) => ({ visitante: 'Novo usuário', triagem: 'Em triagem', aguardando_ativacao: 'Aguardando ativação (pagamento)', ativo: 'Ativo' })[value] ?? value.replaceAll('_', ' ');
+  const badge = (cell, type) => `<span class="badge badge-${type}-${cell.getValue()}">${type === 'status' ? statusLabel(cell.getValue()) : cell.getValue().replace('_', ' ')}</span>`;
   const situationFormatter = (cell) => { const situation = badge(cell, 'status'); const expiresAt = cell.getData().expira_em; if (cell.getValue() !== 'ativo' || !expiresAt) return situation; const days = Math.max(0, Math.ceil((new Date(expiresAt) - new Date()) / 86400000)); return `<div>${situation}<small class="d-block text-muted mt-1">${days} ${days === 1 ? 'dia restante' : 'dias restantes'}</small></div>`; };
   let editingUserId = null;
   const resetUserForm = () => { editingUserId = null; $('#user-form')[0].reset(); $('#user-form').removeClass('was-validated'); $('#user-alert').addClass('d-none'); $('#user-modal .eyebrow').text('NOVO CADASTRO'); $('#user-modal .modal-title').text('Adicionar usuário'); $('#user-senha').prop('required', true).closest('.col-md-6').show(); $('#user-tipo').val('usuario').trigger('change'); $('#user-submit').text('Cadastrar usuário'); };
