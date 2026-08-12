@@ -5,12 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Usuário · MetaFit Admin</title>
+  <link rel="icon" type="image/png" href="/assets/images/favico.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="/assets/css/style.css?v=0.1.3" rel="stylesheet">
 </head>
 <body class="app-page">
-  <aside class="sidebar"><a class="brand" href="/users">MetaFit</a><nav class="sidebar-nav"><a class="active" href="/users"><i class="bi bi-people"></i> Usuários</a></nav><div class="sidebar-bottom"></div></aside>
+  <aside class="sidebar"><a class="brand" href="/users"><span class="brand-mark"><i class="bi bi-activity"></i></span>meta<span>fit</span></a><nav class="sidebar-nav"><a class="active" href="/users"><i class="bi bi-people"></i> Usuários</a></nav><div class="sidebar-bottom"><div class="dropdown"><button id="account-menu-toggle" class="btn account-menu-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Abrir menu da conta"><i class="bi bi-person"></i></button><ul class="dropdown-menu dropdown-menu-end account-menu"><li><button class="dropdown-item" type="button"><i class="bi bi-person me-2"></i>Minha Conta</button></li><li><hr class="dropdown-divider"></li><li><button id="logout-button" class="dropdown-item account-logout" type="button"><i class="bi bi-box-arrow-right me-2"></i>Sair</button></li></ul></div></div></aside>
   <main class="main-content">
     <header class="page-header">
       <div><a class="text-decoration-none small text-muted" href="/users"><i class="bi bi-arrow-left me-1"></i>Usuários</a><h1 id="page-title" class="mt-2">Novo usuário</h1><p id="page-description" class="text-muted mb-0">Cadastre uma pessoa para acessar a plataforma.</p></div>
