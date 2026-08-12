@@ -1,6 +1,6 @@
 {
   "name": "metafit-admin",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
   "scripts": {
     "build:css": "sass assets/scss/style.scss assets/css/style.css --no-source-map",
