@@ -27,6 +27,7 @@
             <div class="col-md-5"><label class="form-label" for="user-whatsapp">WhatsApp</label><input class="form-control" id="user-whatsapp" required placeholder="(00) 00000-0000"><small id="whatsapp-edit-note" class="form-text d-none">A alteração do WhatsApp seguirá um protocolo específico.</small></div>
             <div class="col-md-6"><label class="form-label" for="user-data-nascimento">Data de nascimento</label><input class="form-control" type="date" id="user-data-nascimento"></div>
             <div class="col-md-6"><label class="form-label" for="user-sexo">Sexo</label><select class="form-select" id="user-sexo"><option value="nao_informado">Não informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select></div>
+            <div class="col-12"><label class="form-label" for="user-instrucoes-ia">Preferências e instruções de atendimento</label><textarea class="form-control" id="user-instrucoes-ia" rows="4" maxlength="2000" placeholder="Ex.: Prefere mensagens curtas. Evitar falar sobre calorias."></textarea><small class="form-text">Orientações privadas para personalizar a comunicação da IA. Não substituem regras de saúde e segurança.</small></div>
           </div>
         </div></section>
         <section id="account-details" class="col-12 d-none"><div class="content-card"><h5 class="mb-4">Detalhes do registro</h5><div class="row g-3 small">
