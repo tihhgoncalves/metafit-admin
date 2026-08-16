@@ -23,14 +23,15 @@ $(function () {
   const accessDuration = (expiresAt) => { if (!expiresAt) return '<span class="badge text-bg-secondary">Sem crédito</span>'; const days = Math.ceil(Math.abs(new Date(expiresAt) - new Date()) / 86400000); return new Date(expiresAt) > new Date() ? `<span class="badge text-bg-success">Ativo por mais ${days} ${days === 1 ? 'dia' : 'dias'}</span>` : `<span class="badge text-bg-danger">Expirado há ${days} ${days === 1 ? 'dia' : 'dias'}</span>`; };
   $('#account-history-section').insertAfter('#invoices-section');
   $('#account-history-list').css({ maxHeight: '320px', overflowY: 'auto', paddingRight: '8px' });
+  const renderAccountHistory = () => { $('#account-history-section').removeClass('d-none'); $('#account-history-list').html(accountHistory.length ? accountHistory.map((event, index) => `<div class="border-bottom py-3 d-flex align-items-center justify-content-between gap-3"><div><div class="fw-medium">${escapeHtml(event.description)}</div><small class="text-muted d-block">${formatDate(event.created_at, true)}</small><small class="text-muted">Responsável: ${escapeHtml(event.responsible || 'Não informado')}</small></div>${event.details ? `<button type="button" class="btn btn-sm btn-outline-secondary view-account-history-details" data-event-index="${index}" title="Ver detalhes" aria-label="Ver detalhes"><i class="bi bi-info-circle"></i></button>` : ''}</div>`).join('') : '<p class="text-muted mb-0">Nenhum evento de conta registrado.</p>'); };
+  const loadAccountHistory = () => MetaFitApi.request({ path: `/users/${userId}/account-history?limit=100` }).done(({ history }) => { accountHistory = history ?? []; renderAccountHistory(); }).fail((error) => $('#page-alert').text(MetaFitApi.messageFrom(error)).removeClass('d-none'));
   const loadUserDetails = () => MetaFitApi.request({ path: `/users/${userId}` }).done(({ user }) => {
     $('#user-nome').val(user.nome || ''); $('#user-nome-preferido').val(user.nome_preferido || ''); $('#user-instrucoes-ia').val(user.instrucoes_ia || ''); $('#user-email').val(user.email || ''); $('#user-whatsapp').val(user.whatsapp || ''); $('#user-data-nascimento').val(user.data_nascimento || ''); $('#user-sexo').val(user.sexo || 'nao_informado');
     $('#account-details').removeClass('d-none');
     setText('#detail-situacao', statusLabel(user.situacao)); setRelativeDate('#detail-whatsapp', user.ultima_mensagem_whatsapp_em); setRelativeDate('#detail-login', user.ultimo_login); setRelativeDate('#detail-created', user.created_at);
     setText('#detail-channel', user.canais?.some((channel) => channel.canal === 'whatsapp' && channel.ativo) ? 'Vinculado' : 'Não vinculado'); $('#detail-access-duration').html(accessDuration(user.expira_em));
-    accountHistory = user.historico_conta ?? []; $('#account-history-section').removeClass('d-none'); $('#account-history-list').html(accountHistory.length ? accountHistory.map((event, index) => `<div class="border-bottom py-3 d-flex align-items-center justify-content-between gap-3"><div><div class="fw-medium">${escapeHtml(event.description)}</div><small class="text-muted d-block">${formatDate(event.created_at, true)}</small><small class="text-muted">Responsável: ${escapeHtml(event.responsible || 'Não informado')}</small></div>${event.details ? `<button type="button" class="btn btn-sm btn-outline-secondary view-account-history-details" data-event-index="${index}" title="Ver detalhes" aria-label="Ver detalhes"><i class="bi bi-info-circle"></i></button>` : ''}</div>`).join('') : '<p class="text-muted mb-0">Nenhum evento de conta registrado.</p>');
   }).fail((error) => $('#page-alert').text(MetaFitApi.messageFrom(error)).removeClass('d-none'));
-  const refreshBillingData = () => { loadInvoices(); loadUserDetails(); };
+  const refreshBillingData = () => { loadInvoices(); loadUserDetails(); loadAccountHistory(); };
 
   if (isEditing) {
     $('#page-title').text('Detalhes do usuário');
@@ -39,6 +40,7 @@ $(function () {
     $('#user-submit').text('Salvar alterações');
     loadInvoices();
     loadUserDetails();
+    loadAccountHistory();
   }
 
   $('#account-history-list').on('click', '.view-account-history-details', function () { const event = accountHistory[$(this).data('event-index')]; if (!event) return; $('#account-history-details-content').html(renderAccountEventDetails(event.details)); bootstrap.Modal.getOrCreateInstance(document.getElementById('account-history-details-modal')).show(); });
