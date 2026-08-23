@@ -12,6 +12,25 @@ $(function () {
 
   const formatMoney = (cents) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((cents || 0) / 100);
   const escapeHtml = (value) => $('<div>').text(value).html();
+  const conversationDirectionLabel = (direction) => direction === 'received' ? 'Recebida' : 'Enviada';
+  const conversationTypeLabel = (type) => ({ text: 'Texto', audio: 'Áudio', image: 'Imagem', video: 'Vídeo', document: 'Documento', sticker: 'Figurinha', interactive: 'Interativa', contacts: 'Contato', template: 'Template' })[type] ?? (type || 'Não informado');
+  const conversationStatusLabel = (status) => ({ aceita: 'Aceita', enviada: 'Enviada', entregue: 'Entregue', lida: 'Lida', falhou: 'Falhou' })[status] ?? 'Sem status';
+  const conversationMessageText = (message) => {
+    if (message.type === 'image') {
+      const text = message.content?.text?.trim();
+      if (!text || text === '[Imagem recebida]' || text === '[Imagem enviada]') return '[IMAGEM]';
+      return text.startsWith('[IMAGEM]') ? text : `[IMAGEM]\n${text}`;
+    }
+    if (message.content?.text) return message.content.text;
+    if (message.content?.template?.name) return `Template: ${message.content.template.name}`;
+    if (message.type) return `[${message.type === 'image' ? 'Imagem' : message.type}]`;
+    return 'Mensagem sem conteúdo de texto.';
+  };
+  const renderConversation = (messages) => messages.length ? messages.map((message) => {
+    const received = message.direction === 'received';
+    const error = message.error?.message ? `<div class="conversation-message-error">Falha: ${escapeHtml(message.error.message)}</div>` : '';
+    return `<article class="conversation-message ${received ? 'conversation-message-received' : 'conversation-message-sent'}"><div class="conversation-message-meta"><strong>${conversationDirectionLabel(message.direction)}</strong><span>${escapeHtml(conversationTypeLabel(message.type))} · ${escapeHtml(formatDate(message.status_at || message.created_at, true))} · ${conversationStatusLabel(message.status)}</span></div><div class="conversation-message-text">${escapeHtml(conversationMessageText(message)).replace(/\n/g, '<br>')}</div>${error}</article>`;
+  }).join('') : '<p class="text-muted mb-0">Nenhuma mensagem de WhatsApp foi registrada para este usuário.</p>';
   const paymentMethodLabel = (value) => ({ pix: 'PIX', dinheiro: 'Dinheiro', transferencia: 'Transferência', cartao: 'Cartão', bonificacao: 'Bonificação', outro: 'Outro' })[value] ?? 'Não informado';
   const auditDetails = (note) => { const details = note.details; if (!details) return ''; const items = []; if (details.valorCentavos !== undefined) items.push(`Valor: ${formatMoney(details.valorCentavos)}`); if (details.diasCredito !== undefined) items.push(`Crédito: ${details.diasCredito} dias`); if (details.formaPagamento) items.push(`Forma: ${paymentMethodLabel(details.formaPagamento)}`); if (details.pagaEm) items.push(`Pago em: ${formatDate(details.pagaEm, true)}`); if (details.novoStatus) items.push(`Novo status: ${details.novoStatus}`); const summary = items.length ? `<div class="small text-muted mt-1">${items.map(escapeHtml).join(' · ')}</div>` : ''; const observation = details.observacao ? `<div class="small mt-2">${escapeHtml(details.observacao)}</div>` : ''; return summary + observation; };
   const detailLabels = { instrucoesIa: 'Preferências e instruções de atendimento', respostas: 'Respostas da triagem' };
@@ -30,6 +49,7 @@ $(function () {
     $('#account-details').removeClass('d-none');
     setText('#detail-situacao', statusLabel(user.situacao)); setRelativeDate('#detail-whatsapp', user.ultima_mensagem_whatsapp_em); setRelativeDate('#detail-login', user.ultimo_login); setRelativeDate('#detail-created', user.created_at);
     setText('#detail-channel', user.canais?.some((channel) => channel.canal === 'whatsapp' && channel.ativo) ? 'Vinculado' : 'Não vinculado'); $('#detail-access-duration').html(accessDuration(user.expira_em));
+    $('#whatsapp-conversation-title').text(`Conversa recente${user.nome ? ` · ${user.nome}` : ''}`);
   }).fail((error) => $('#page-alert').text(MetaFitApi.messageFrom(error)).removeClass('d-none'));
   const refreshBillingData = () => { loadInvoices(); loadUserDetails(); loadAccountHistory(); };
 
@@ -38,10 +58,31 @@ $(function () {
     $('#page-description').text('Consulte as informações e atualize os dados permitidos.');
     $('#user-whatsapp').prop('readonly', true); $('#whatsapp-edit-note').removeClass('d-none');
     $('#user-submit').text('Salvar alterações');
+    $('#view-conversation').removeClass('d-none');
     loadInvoices();
     loadUserDetails();
     loadAccountHistory();
   }
+
+  const scrollConversationToBottom = () => requestAnimationFrame(() => requestAnimationFrame(() => {
+    const modalBody = document.querySelector('#whatsapp-conversation-modal .modal-body');
+    if (modalBody) modalBody.scrollTop = modalBody.scrollHeight;
+  }));
+  const loadConversation = () => {
+    const buttons = $('#view-conversation, #refresh-conversation').prop('disabled', true);
+    const list = $('#whatsapp-conversation-list').html('<div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Carregando mensagens...</div>');
+    MetaFitApi.request({ path: `/users/${userId}/whatsapp-conversation?limit=100` }).done(({ messages, total }) => {
+      $('#whatsapp-conversation-description').text(`${total} ${total === 1 ? 'mensagem exibida' : 'mensagens exibidas'} — as mais recentes, em ordem cronológica.`);
+      list.html(renderConversation(messages ?? []));
+      scrollConversationToBottom();
+    }).fail((error) => list.html(`<p class="text-danger mb-0">${escapeHtml(MetaFitApi.messageFrom(error))}</p>`)).always(() => buttons.prop('disabled', false));
+  };
+  $('#view-conversation').on('click', () => {
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('whatsapp-conversation-modal')).show();
+    loadConversation();
+  });
+  $('#refresh-conversation').on('click', loadConversation);
+  $('#whatsapp-conversation-modal').on('shown.bs.modal', scrollConversationToBottom);
 
   $('#account-history-list').on('click', '.view-account-history-details', function () { const event = accountHistory[$(this).data('event-index')]; if (!event) return; $('#account-history-details-content').html(renderAccountEventDetails(event.details)); bootstrap.Modal.getOrCreateInstance(document.getElementById('account-history-details-modal')).show(); });
 
