@@ -5,6 +5,7 @@ $(function () {
   $('#logout-button').on('click', () => { MetaFitApi.request({ method: 'POST', path: '/auth/logout' }).always(() => { MetaFitApi.clearSession(); window.location.replace('/login'); }); });
   $('.form-select').css({ appearance: 'auto', '-webkit-appearance': 'menulist' });
   const formatDate = (value, withTime = false) => value ? new Intl.DateTimeFormat('pt-BR', withTime ? { dateStyle: 'short', timeStyle: 'short' } : { dateStyle: 'short' }).format(new Date(value)) : 'Não informado';
+  const currentBrazilianDate = () => { const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()).map((part) => [part.type, part.value])); return `${parts.year}-${parts.month}-${parts.day}`; };
   const setText = (selector, value) => $(selector).text(value || 'Não informado');
   const statusLabel = (value) => ({ visitante: 'Novo usuário', triagem: 'Em triagem', aguardando_ativacao: 'Aguardando ativação (pagamento)', ativo: 'Ativo' })[value] ?? 'Não informado';
   const relativeDate = (value) => { const minutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000)); const days = Math.floor(minutes / 1440); const hours = Math.floor((minutes % 1440) / 60); const remainingMinutes = minutes % 60; if (days) return `há ${days} ${days === 1 ? 'dia' : 'dias'}${hours ? ` e ${hours} ${hours === 1 ? 'hora' : 'horas'}` : ''}`; if (hours) return `há ${hours} ${hours === 1 ? 'hora' : 'horas'}${remainingMinutes ? ` e ${remainingMinutes} min` : ''}`; return minutes < 1 ? 'agora mesmo' : `há ${minutes} min`; };
@@ -97,6 +98,7 @@ $(function () {
     $('#user-whatsapp').prop('readonly', true); $('#whatsapp-edit-note').removeClass('d-none');
     $('#user-submit').text('Salvar alterações');
     $('#view-conversation').removeClass('d-none');
+    $('#view-daily-goals').removeClass('d-none');
     loadInvoices();
     loadUserDetails();
     loadUserEvents();
@@ -122,6 +124,24 @@ $(function () {
   });
   $('#refresh-conversation').on('click', loadConversation);
   $('#whatsapp-conversation-modal').on('shown.bs.modal', scrollConversationToBottom);
+
+  $('#view-daily-goals').on('click', () => {
+    $('#daily-goals-date').val(currentBrazilianDate());
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('daily-goals-date-modal')).show();
+  });
+  $('#daily-goals-date-form').on('submit', function (event) {
+    event.preventDefault();
+    const date = $('#daily-goals-date').val();
+    if (!date) return;
+    const button = $('#daily-goals-date-submit').prop('disabled', true).text('Gerando...');
+    MetaFitApi.request({ path: `/users/${userId}/daily-goals-card?date=${encodeURIComponent(date)}` }).done((card) => {
+      if (!card.image?.base64 || !card.image?.mime_type) return;
+      $('#daily-goals-card-title').text(`Metas diárias · ${formatDate(`${date}T12:00:00Z`)}`);
+      $('#daily-goals-card-image').attr('src', `data:${card.image.mime_type};base64,${card.image.base64}`);
+      bootstrap.Modal.getInstance(document.getElementById('daily-goals-date-modal')).hide();
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('daily-goals-card-modal')).show();
+    }).fail((error) => $('#page-alert').text(MetaFitApi.messageFrom(error)).removeClass('d-none')).always(() => button.prop('disabled', false).text('Ver metas'));
+  });
 
   $('#account-history-list').on('click', '.view-account-history-details', function () { const event = accountHistory[$(this).data('event-index')]; if (!event) return; $('#account-history-details-content').html(renderAccountEventDetails(event.details)); bootstrap.Modal.getOrCreateInstance(document.getElementById('account-history-details-modal')).show(); });
   $('#user-events-list').on('click', '.view-user-event-details', function () { const event = userEvents[$(this).data('event-index')]; if (!event) return; $('#user-event-details-title').text(`Detalhes · ${eventCategoryLabel(event.category)}`); $('#user-event-details-content').html(renderUserEventDetails(event)); bootstrap.Modal.getOrCreateInstance(document.getElementById('user-event-details-modal')).show(); });
