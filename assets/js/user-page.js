@@ -35,6 +35,44 @@ $(function () {
   const auditDetails = (note) => { const details = note.details; if (!details) return ''; const items = []; if (details.valorCentavos !== undefined) items.push(`Valor: ${formatMoney(details.valorCentavos)}`); if (details.diasCredito !== undefined) items.push(`Crédito: ${details.diasCredito} dias`); if (details.formaPagamento) items.push(`Forma: ${paymentMethodLabel(details.formaPagamento)}`); if (details.pagaEm) items.push(`Pago em: ${formatDate(details.pagaEm, true)}`); if (details.novoStatus) items.push(`Novo status: ${details.novoStatus}`); const summary = items.length ? `<div class="small text-muted mt-1">${items.map(escapeHtml).join(' · ')}</div>` : ''; const observation = details.observacao ? `<div class="small mt-2">${escapeHtml(details.observacao)}</div>` : ''; return summary + observation; };
   const detailLabels = { instrucoesIa: 'Preferências e instruções de atendimento', respostas: 'Respostas da triagem' };
   const renderAccountEventDetails = (details) => Object.entries(details ?? {}).map(([key, value]) => `<div class="mb-3"><div class="small text-muted mb-1">${escapeHtml(detailLabels[key] ?? key)}</div><div class="border rounded p-3 bg-light">${escapeHtml(typeof value === 'string' ? value : JSON.stringify(value, null, 2))}</div></div>`).join('') || '<p class="text-muted mb-0">Não há detalhes adicionais para este evento.</p>';
+  const eventCategoryLabel = (category) => ({ peso: 'Peso', altura: 'Altura', agua: 'Água', alimentacao: 'Alimentação', dose: 'Medicamento' })[category] ?? category;
+  const eventSourceLabel = (source) => ({ app: 'App', whatsapp: 'WhatsApp', triagem: 'Triagem', ia: 'IA', api: 'API' })[source] ?? source;
+  const eventDataSummary = (event) => {
+    if (event.description) return event.description;
+    const data = event.data ?? {};
+    if (event.category === 'agua') return data.total_ml !== undefined ? `${data.total_ml} ml` : 'Quantidade não informada';
+    if (event.category === 'alimentacao') {
+      const nutrients = [`${data.calorias ?? 0} kcal`, data.proteinas !== undefined ? `${data.proteinas} g proteínas` : null].filter(Boolean);
+      return nutrients.join(' · ') || 'Nutrientes não informados';
+    }
+    if (data.value !== undefined) return String(data.value);
+    return Object.keys(data).length ? JSON.stringify(data) : 'Sem detalhes';
+  };
+  const eventDataLabels = { calorias: 'Calorias', proteinas: 'Proteínas', carboidratos: 'Carboidratos', gorduras: 'Gorduras', fibras: 'Fibras', acucares: 'Açúcares', agua_ml: 'Água', total_ml: 'Água', value: 'Valor', itens: 'Itens' };
+  const formatEventValue = (key, value) => {
+    if (key === 'itens') return Array.isArray(value) ? value.map((item) => typeof item === 'string' ? item : JSON.stringify(item)).join('\n') : JSON.stringify(value);
+    if (['proteinas', 'carboidratos', 'gorduras', 'fibras', 'acucares'].includes(key)) return `${value} g`;
+    if (['agua_ml', 'total_ml'].includes(key)) return `${value} ml`;
+    if (key === 'calorias') return `${value} kcal`;
+    return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+  };
+  const renderUserEventDetails = (event) => {
+    const fields = [
+      ['Data e hora', formatDate(event.date_time, true)],
+      ['Tipo', eventCategoryLabel(event.category)],
+      ['Origem', eventSourceLabel(event.source)],
+      ...(event.description ? [['Descrição', event.description]] : []),
+      ...Object.entries(event.data ?? {}).map(([key, value]) => [eventDataLabels[key] ?? key, formatEventValue(key, value)])
+    ];
+    return fields.map(([label, value]) => `<div class="mb-3"><div class="small text-muted mb-1">${escapeHtml(label)}</div><div class="border rounded p-3 bg-light" style="white-space:pre-wrap">${escapeHtml(value)}</div></div>`).join('');
+  };
+  let userEvents = [];
+  const loadUserEvents = () => MetaFitApi.request({ path: `/users/${userId}/events?limite=100` }).done(({ events, total }) => {
+    const records = events ?? []; userEvents = records;
+    $('#user-events-section').removeClass('d-none');
+    $('#user-events-summary').text(`${total} ${total === 1 ? 'registro' : 'registros'} exibidos`);
+    $('#user-events-list').html(records.length ? records.map((event, index) => `<tr><td class="text-nowrap">${escapeHtml(formatDate(event.date_time, true))}</td><td>${escapeHtml(eventCategoryLabel(event.category))}</td><td>${escapeHtml(eventDataSummary(event))}</td><td>${escapeHtml(eventSourceLabel(event.source))}</td><td class="text-end"><button type="button" class="btn btn-sm btn-outline-secondary view-user-event-details" data-event-index="${index}" title="Ver detalhes" aria-label="Ver detalhes"><i class="bi bi-info-circle"></i></button></td></tr>`).join('') : '<tr><td colspan="5" class="text-muted">Nenhum registro encontrado para este usuário.</td></tr>');
+  }).fail((error) => $('#page-alert').text(MetaFitApi.messageFrom(error)).removeClass('d-none'));
   let accountHistory = [];
   const invoiceStatus = (status) => ({ pendente: '<span class="badge rounded-pill text-bg-warning">Pendente</span>', paga: '<span class="badge rounded-pill text-bg-success">Paga</span>', cancelada: '<span class="badge rounded-pill text-bg-secondary">Cancelada</span>' })[status] ?? status;
   const loadInvoices = () => MetaFitApi.request({ path: `/invoices/users/${userId}/invoices` }).done(({ invoices }) => { $('#invoices-section').removeClass('d-none'); $('#invoices-summary').text(`${invoices.length} ${invoices.length === 1 ? 'fatura' : 'faturas'}`); $('#invoices-list').html(invoices.length ? invoices.map((invoice) => `<tr><td>${formatDate(invoice.issued_at)}</td><td>${formatMoney(invoice.amount_cents)}</td><td>${invoice.credit_days} dias</td><td>${invoiceStatus(invoice.status)}</td><td>${invoice.paid_at ? formatDate(invoice.paid_at, true) : '—'}</td><td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-secondary view-invoice-history" data-invoice-id="${invoice.id}" title="Ver histórico" aria-label="Ver histórico"><i class="bi bi-clock-history"></i></button>${invoice.status === 'pendente' && invoice.pix?.copy_paste_code ? `<button class="btn btn-sm btn-outline-secondary ms-1 view-invoice-pix" data-invoice-id="${invoice.id}" title="Ver PIX" aria-label="Ver PIX"><i class="bi bi-qr-code"></i></button>` : ''}${['pendente', 'cancelada'].includes(invoice.status) ? `<button class="btn btn-sm btn-primary ms-1 mark-invoice-paid" data-invoice-id="${invoice.id}" title="Confirmar pagamento" aria-label="Confirmar pagamento"><i class="bi bi-check-lg"></i></button>` : ''}${invoice.status === 'paga' ? `<button class="btn btn-sm btn-outline-danger ms-1 reverse-invoice-payment" data-invoice-id="${invoice.id}" title="Estornar pagamento" aria-label="Estornar pagamento"><i class="bi bi-arrow-counterclockwise"></i></button>` : ''}</td></tr>`).join('') : '<tr><td colspan="6" class="text-muted">Nenhuma fatura registrada.</td></tr>'); });
@@ -61,6 +99,7 @@ $(function () {
     $('#view-conversation').removeClass('d-none');
     loadInvoices();
     loadUserDetails();
+    loadUserEvents();
     loadAccountHistory();
   }
 
@@ -85,6 +124,7 @@ $(function () {
   $('#whatsapp-conversation-modal').on('shown.bs.modal', scrollConversationToBottom);
 
   $('#account-history-list').on('click', '.view-account-history-details', function () { const event = accountHistory[$(this).data('event-index')]; if (!event) return; $('#account-history-details-content').html(renderAccountEventDetails(event.details)); bootstrap.Modal.getOrCreateInstance(document.getElementById('account-history-details-modal')).show(); });
+  $('#user-events-list').on('click', '.view-user-event-details', function () { const event = userEvents[$(this).data('event-index')]; if (!event) return; $('#user-event-details-title').text(`Detalhes · ${eventCategoryLabel(event.category)}`); $('#user-event-details-content').html(renderUserEventDetails(event)); bootstrap.Modal.getOrCreateInstance(document.getElementById('user-event-details-modal')).show(); });
 
   const manualInvoiceRow = $('#create-invoice').closest('.row');
   manualInvoiceRow.hide(); manualInvoiceRow.prev('h6').hide(); manualInvoiceRow.prev('h6').prev('hr').hide();
