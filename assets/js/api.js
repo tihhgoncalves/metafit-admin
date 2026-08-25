@@ -3,9 +3,36 @@ const metaFitApiScriptUrl = document.currentScript?.src;
 window.MetaFitApi = (() => {
   const tokenKey = 'metafit_admin_token';
   const userKey = 'metafit_admin_user';
+  let pendingAuthenticatedRequests = 0;
+  const loadingOverlayId = 'api-loading-overlay';
+  const getLoadingOverlay = () => {
+    let overlay = document.getElementById(loadingOverlayId);
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = loadingOverlayId;
+    overlay.className = 'api-loading-overlay';
+    overlay.setAttribute('role', 'status');
+    overlay.setAttribute('aria-live', 'polite');
+    overlay.setAttribute('aria-label', 'Carregando dados');
+    overlay.innerHTML = '<div class="api-loading-overlay__content"><span class="spinner-border" aria-hidden="true"></span><span>Carregando dados...</span></div>';
+    document.body.append(overlay);
+    return overlay;
+  };
+  const updateLoadingOverlay = () => {
+    const isLoading = pendingAuthenticatedRequests > 0;
+    const overlay = getLoadingOverlay();
+    overlay.classList.toggle('is-visible', isLoading);
+    document.body.classList.toggle('is-api-loading', isLoading);
+    document.body.setAttribute('aria-busy', String(isLoading));
+  };
   const request = ({ method = 'GET', path, data, authenticated = true }) => {
     const operation = $.ajax({ url: `${window.METAFIT_CONFIG.apiUrl}${path}`, method, contentType: 'application/json', dataType: 'json', data: data ? JSON.stringify(data) : undefined, headers: authenticated && localStorage.getItem(tokenKey) ? { Authorization: `Bearer ${localStorage.getItem(tokenKey)}` } : {} });
-    if (authenticated) operation.fail((error) => { if (error.status === 401 || error.status === 403) { clearSession(); window.location.replace('/login'); } });
+    if (authenticated) {
+      pendingAuthenticatedRequests += 1;
+      updateLoadingOverlay();
+      operation.fail((error) => { if (error.status === 401 || error.status === 403) { clearSession(); window.location.replace('/login'); } });
+      operation.always(() => { pendingAuthenticatedRequests = Math.max(0, pendingAuthenticatedRequests - 1); updateLoadingOverlay(); });
+    }
     return operation;
   };
   const messageFrom = (error) => error.responseJSON?.message || 'Não foi possível concluir a operação. Tente novamente.';
