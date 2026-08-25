@@ -20,7 +20,7 @@ $(function () {
   let editingUserId = null;
   const resetUserForm = () => { editingUserId = null; $('#user-form')[0].reset(); $('#user-form').removeClass('was-validated'); $('#user-alert').addClass('d-none'); $('#user-modal .eyebrow').text('NOVO CADASTRO'); $('#user-modal .modal-title').text('Adicionar usuário'); $('#user-senha').prop('required', true).closest('.col-md-6').show(); $('#user-tipo').val('usuario').trigger('change'); $('#user-submit').text('Cadastrar usuário'); };
   const openUserEditor = (user) => window.location.assign(`/users/${user.id}`);
-  const table = new Tabulator('#users-table', { layout: 'fitColumns', placeholder: 'Nenhum usuário encontrado.', columns: [
+  const table = new Tabulator('#users-table', { layout: 'fitColumns', placeholder: 'Nenhum usuário encontrado.', initialSort: [{ column: 'ultima_mensagem_whatsapp_em', dir: 'desc' }], columns: [
     { title: 'USUÁRIO', field: 'nome', minWidth: 240, formatter: (cell) => `<div class="table-person"><span class="table-avatar">${cell.getValue().slice(0, 1)}</span><div><strong>${cell.getValue()}</strong><small>${cell.getData().email || 'Sem e-mail'}</small></div></div>` },
     { title: 'WHATSAPP', field: 'whatsapp', minWidth: 150, formatter: (cell) => cell.getValue() || '—' },
     { title: 'ÚLTIMA MENSAGEM', field: 'ultima_mensagem_whatsapp_em', width: 175, formatter: lastWhatsAppMessageFormatter },
@@ -29,18 +29,22 @@ $(function () {
     { title: 'CADASTRADO EM', field: 'created_at', width: 155, formatter: dateFormatter },
     { title: '', width: 72, hozAlign: 'right', headerSort: false, formatter: () => '<button class="btn btn-sm btn-outline-secondary" type="button" title="Editar usuário" aria-label="Editar usuário"><i class="bi bi-pencil"></i></button>', cellClick: (_event, cell) => openUserEditor(cell.getRow().getData()) }
   ] });
-  function loadUsers() { $('#users-count').text('Carregando...'); MetaFitApi.request({ path: '/users' }).done((result) => { table.replaceData(result.users); $('#users-count').text(`${result.total} ${result.total === 1 ? 'usuário cadastrado' : 'usuários cadastrados'}`); }).fail((error) => { $('#users-count').text(''); if (error.status === 401 || error.status === 403) { MetaFitApi.clearSession(); window.location.replace('/login'); } }); }
+  function loadUsers() { const refreshButton = $('#users-refresh'); refreshButton.prop('disabled', true).find('i').addClass('spin'); $('#users-count').text('Carregando...'); MetaFitApi.request({ path: '/users' }).done((result) => { table.replaceData(result.users); applyFilters(); $('#users-count').text(`${result.total} ${result.total === 1 ? 'usuário cadastrado' : 'usuários cadastrados'}`); }).fail((error) => { $('#users-count').text(''); if (error.status === 401 || error.status === 403) { MetaFitApi.clearSession(); window.location.replace('/login'); } }).always(() => refreshButton.prop('disabled', false).find('i').removeClass('spin')); }
   const typeFilter = $('<select id="users-type-filter" class="form-select form-select-sm"><option value="">Todos os perfis</option><option value="admin">Somente administradores</option><option value="usuario">Somente usuários</option></select>');
-  typeFilter.insertAfter($('.table-toolbar .search-box'));
+  const situationFilter = $('<select id="users-situation-filter" class="form-select form-select-sm"><option value="">Todas as situações</option><option value="ativo">Ativo</option><option value="visitante">Novo usuário</option><option value="triagem">Em triagem</option><option value="aguardando_ativacao">Aguardando ativação (pagamento)</option></select>');
+  typeFilter.insertAfter($('.table-toolbar .search-box')); situationFilter.insertAfter(typeFilter);
   let searchTerm = '';
   let selectedType = '';
+  let selectedSituation = '';
   const applyFilters = () => table.setFilter((data) => {
     const searchable = `${data.nome || ''} ${data.email || ''} ${data.whatsapp || ''}`.toLowerCase();
-    return (!searchTerm || searchable.includes(searchTerm)) && (!selectedType || data.tipo === selectedType);
+    return (!searchTerm || searchable.includes(searchTerm)) && (!selectedType || data.tipo === selectedType) && (!selectedSituation || data.situacao === selectedSituation);
   });
   loadUsers();
   $('#users-search').on('input', function () { searchTerm = $(this).val().trim().toLowerCase(); applyFilters(); });
   typeFilter.on('change', function () { selectedType = $(this).val(); applyFilters(); });
+  situationFilter.on('change', function () { selectedSituation = $(this).val(); applyFilters(); });
+  $('#users-refresh').on('click', loadUsers);
   $('[data-bs-target="#user-modal"]').removeAttr('data-bs-toggle data-bs-target').on('click', () => window.location.assign('/users/new'));
   $('.fluid-select').select2({ dropdownParent: $('#user-modal'), minimumResultsForSearch: Infinity, width: '100%' });
   $('#user-modal').on('show.bs.modal', (event) => { if (event.relatedTarget) resetUserForm(); }).on('hidden.bs.modal', resetUserForm);
