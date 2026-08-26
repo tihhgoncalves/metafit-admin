@@ -1,6 +1,7 @@
 $(function () {
   if (!MetaFitApi.protect()) return;
   $('.sidebar-nav').append('<div class="sidebar-nav-dropdown"><button type="button" class="sidebar-nav-menu"><i class="bi bi-headset"></i> Atendimentos <i class="bi bi-chevron-down sidebar-nav-chevron"></i></button><div class="sidebar-nav-submenu"><a href="/atendimentos">Fila de atendimentos</a><a href="/atendimentos/gatilhos">Gatilhos e mensagens</a></div></div>');
+  $('.sidebar-nav').append('<a href="/base-conhecimento"><i class="bi bi-journal-text"></i> Base de conhecimento</a>');
   $(document).on('click', '.sidebar-nav-menu', function (event) { event.stopPropagation(); $(this).closest('.sidebar-nav-dropdown').toggleClass('is-open'); });
   $(document).on('click', () => $('.sidebar-nav-dropdown').removeClass('is-open'));
   const userId = new URLSearchParams(window.location.search).get('id') ?? window.location.pathname.match(/^\/users\/([a-f\d]{24})\/?$/i)?.[1] ?? null;
