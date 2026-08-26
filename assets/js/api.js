@@ -3,6 +3,7 @@ const metaFitApiScriptUrl = document.currentScript?.src;
 window.MetaFitApi = (() => {
   const tokenKey = 'metafit_admin_token';
   const userKey = 'metafit_admin_user';
+  const lastLoginEmailCookieKey = 'metafit_admin_ultimo_email';
   let pendingAuthenticatedRequests = 0;
   const loadingOverlayId = 'api-loading-overlay';
   const getLoadingOverlay = () => {
@@ -25,8 +26,10 @@ window.MetaFitApi = (() => {
     document.body.classList.toggle('is-api-loading', isLoading);
     document.body.setAttribute('aria-busy', String(isLoading));
   };
+  const getStorageWithSession = (key) => localStorage.getItem(key) ?? sessionStorage.getItem(key);
   const request = ({ method = 'GET', path, data, authenticated = true }) => {
-    const operation = $.ajax({ url: `${window.METAFIT_CONFIG.apiUrl}${path}`, method, contentType: 'application/json', dataType: 'json', data: data ? JSON.stringify(data) : undefined, headers: authenticated && localStorage.getItem(tokenKey) ? { Authorization: `Bearer ${localStorage.getItem(tokenKey)}` } : {} });
+    const token = getStorageWithSession(tokenKey);
+    const operation = $.ajax({ url: `${window.METAFIT_CONFIG.apiUrl}${path}`, method, contentType: 'application/json', dataType: 'json', data: data ? JSON.stringify(data) : undefined, headers: authenticated && token ? { Authorization: `Bearer ${token}` } : {} });
     if (authenticated) {
       pendingAuthenticatedRequests += 1;
       updateLoadingOverlay();
@@ -36,11 +39,22 @@ window.MetaFitApi = (() => {
     return operation;
   };
   const messageFrom = (error) => error.responseJSON?.message || 'Não foi possível concluir a operação. Tente novamente.';
-  const saveSession = ({ token, user }) => { localStorage.setItem(tokenKey, token); localStorage.setItem(userKey, JSON.stringify(user)); };
-  const clearSession = () => { localStorage.removeItem(tokenKey); localStorage.removeItem(userKey); };
-  const currentUser = () => { try { return JSON.parse(localStorage.getItem(userKey)); } catch { return null; } };
-  const protect = () => { const user = currentUser(); if (!localStorage.getItem(tokenKey) || !user || user.tipo !== 'admin') { clearSession(); window.location.replace('/login'); return false; } return true; };
-  return { request, messageFrom, saveSession, clearSession, currentUser, protect };
+  const saveLastLoginEmail = (email) => {
+    const value = String(email || '').trim().toLowerCase();
+    if (!value) return;
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    document.cookie = `${lastLoginEmailCookieKey}=${encodeURIComponent(value)}; expires=${expiresAt.toUTCString()}; path=/; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+  };
+  const getLastLoginEmail = () => {
+    const cookie = document.cookie.split('; ').find((item) => item.startsWith(`${lastLoginEmailCookieKey}=`));
+    return cookie ? decodeURIComponent(cookie.split('=').slice(1).join('=')) : '';
+  };
+  const saveSession = ({ token, user }, persistent = true) => { const storage = persistent ? localStorage : sessionStorage; const otherStorage = persistent ? sessionStorage : localStorage; otherStorage.removeItem(tokenKey); otherStorage.removeItem(userKey); storage.setItem(tokenKey, token); storage.setItem(userKey, JSON.stringify(user)); saveLastLoginEmail(user?.email); };
+  const clearSession = () => { [localStorage, sessionStorage].forEach((storage) => { storage.removeItem(tokenKey); storage.removeItem(userKey); }); };
+  const currentUser = () => { try { return JSON.parse(getStorageWithSession(userKey)); } catch { return null; } };
+  const protect = () => { const user = currentUser(); if (!getStorageWithSession(tokenKey) || !user || user.tipo !== 'admin') { clearSession(); window.location.replace('/login'); return false; } return true; };
+  return { request, messageFrom, saveSession, clearSession, currentUser, protect, saveLastLoginEmail, getLastLoginEmail };
 })();
 
 $(function () {
