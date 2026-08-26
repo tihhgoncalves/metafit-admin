@@ -8,6 +8,8 @@ RewriteRule ^login/?$ pages/login.php [L]
 RewriteRule ^users/new/?$ pages/user.php?novo=1 [QSA,L]
 RewriteRule ^users/([a-f0-9]{24})/?$ pages/user.php?id=$1 [QSA,L,NC]
 RewriteRule ^users/?$ pages/users.php [L]
+RewriteRule ^atendimentos/?$ pages/manual-service.php [L]
+RewriteRule ^atendimentos/gatilhos/?$ pages/manual-service-triggers.php [L]
 RewriteRule ^config/config\.php$ - [L]
 
 # Serve pages PHP without exposing their extension in the public URL.

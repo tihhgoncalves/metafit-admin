@@ -1,5 +1,6 @@
 $(function () {
   if (!MetaFitApi.protect()) return;
+  $('.sidebar-nav').append('<a href="/atendimentos"><i class="bi bi-headset"></i> Atendimentos</a>');
   const userId = new URLSearchParams(window.location.search).get('id') ?? window.location.pathname.match(/^\/users\/([a-f\d]{24})\/?$/i)?.[1] ?? null;
   const isEditing = Boolean(userId);
   $('#logout-button').on('click', () => { MetaFitApi.request({ method: 'POST', path: '/auth/logout' }).always(() => { MetaFitApi.clearSession(); window.location.replace('/login'); }); });
