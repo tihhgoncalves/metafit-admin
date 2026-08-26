@@ -1,6 +1,8 @@
 $(function () {
   if (!MetaFitApi.protect()) return;
-  $('.sidebar-nav').append('<a href="/atendimentos"><i class="bi bi-headset"></i> Atendimentos</a><a href="/atendimentos/gatilhos"><i class="bi bi-lightning-charge"></i> Gatilhos</a>');
+  $('.sidebar-nav').append('<div class="sidebar-nav-dropdown"><button type="button" class="sidebar-nav-menu"><i class="bi bi-headset"></i> Atendimentos <i class="bi bi-chevron-down sidebar-nav-chevron"></i></button><div class="sidebar-nav-submenu"><a href="/atendimentos">Fila de atendimentos</a><a href="/atendimentos/gatilhos">Gatilhos e mensagens</a></div></div>');
+  $(document).on('click', '.sidebar-nav-menu', function (event) { event.stopPropagation(); $(this).closest('.sidebar-nav-dropdown').toggleClass('is-open'); });
+  $(document).on('click', () => $('.sidebar-nav-dropdown').removeClass('is-open'));
   const currentUser = MetaFitApi.currentUser();
   $('#user-name').text(currentUser.nome); $('#user-initials').text(currentUser.nome.split(/\s+/).slice(0, 2).map((name) => name[0]).join('').toUpperCase());
   $('.sidebar-bottom').html('<div class="dropdown"><button id="account-menu-toggle" class="btn account-menu-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Abrir menu da conta"><i class="bi bi-person"></i></button><ul class="dropdown-menu dropdown-menu-end account-menu"><li><button class="dropdown-item" type="button"><i class="bi bi-person me-2"></i>Minha Conta</button></li><li><hr class="dropdown-divider"></li><li><button id="logout-button" class="dropdown-item account-logout" type="button"><i class="bi bi-box-arrow-right me-2"></i>Sair</button></li></ul></div>');
