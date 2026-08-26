@@ -1,5 +1,8 @@
 $(function () {
   if (!MetaFitApi.protect()) return;
+  $('.sidebar').append('<button type="button" class="mobile-nav-toggle" aria-label="Abrir menu"><i class="bi bi-list"></i></button>');
+  $('.mobile-nav-toggle').on('click', function (event) { event.stopPropagation(); $('.sidebar').toggleClass('nav-open'); });
+  $('.sidebar-nav').on('click', 'a', () => $('.sidebar').removeClass('nav-open'));
   $('.page-header').append('<button id="find-user" class="btn btn-outline-secondary"><i class="bi bi-search me-1"></i>Encontrar usuário</button>');
   $('body').append('<div class="modal fade" id="find-user-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="find-user-form"><div class="modal-header"><h5 class="modal-title">Encontrar usuário</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">WhatsApp recebido</label><input id="find-user-whatsapp" class="form-control" required placeholder="(00) 00000-0000"><div id="find-user-error" class="alert alert-danger d-none mt-3 mb-0"></div></div><div class="modal-footer"><button class="btn btn-primary">Encontrar e abrir prontuário</button></div></form></div></div></div>');
   $('body').append('<div class="modal fade" id="timeline-event-details-modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><div><p class="eyebrow mb-1">AUDITORIA DO ATENDIMENTO</p><h5 class="modal-title">Detalhes do evento</h5></div><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div id="timeline-event-details-content" class="modal-body"></div><div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">Fechar</button></div></div></div></div>');
@@ -7,7 +10,7 @@ $(function () {
   renderManualServiceMenu();
   $('.sidebar-nav').append('<a href="/base-conhecimento"><i class="bi bi-journal-text"></i> Base de conhecimento</a>');
   $(document).on('click', '.sidebar-nav-menu', function (event) { event.stopPropagation(); $(this).closest('.sidebar-nav-dropdown').toggleClass('is-open'); });
-  $(document).on('click', () => $('.sidebar-nav-dropdown').removeClass('is-open'));
+  $(document).on('click', () => { $('.sidebar-nav-dropdown').removeClass('is-open'); $('.sidebar').removeClass('nav-open'); });
   $('#open-whatsapp').html('<i class="bi bi-whatsapp me-1"></i>Copiar WhatsApp');
   $('#complete-case').text('Fechar');
   $('#open-user').attr('target', '_blank').attr('rel', 'noopener');

@@ -1,9 +1,12 @@
 $(function () {
   if (!MetaFitApi.protect()) return;
+  $('.sidebar').append('<button type="button" class="mobile-nav-toggle" aria-label="Abrir menu"><i class="bi bi-list"></i></button>');
+  $('.mobile-nav-toggle').on('click', function (event) { event.stopPropagation(); $('.sidebar').toggleClass('nav-open'); });
+  $('.sidebar-nav').on('click', 'a', () => $('.sidebar').removeClass('nav-open'));
   $('.sidebar-nav').append('<div class="sidebar-nav-dropdown"><button type="button" class="sidebar-nav-menu"><i class="bi bi-headset"></i> Atendimentos <i class="bi bi-chevron-down sidebar-nav-chevron"></i></button><div class="sidebar-nav-submenu"><a href="/atendimentos">Fila de atendimentos</a><a href="/atendimentos/gatilhos">Gatilhos e mensagens</a></div></div>');
   $('.sidebar-nav').append('<a href="/base-conhecimento"><i class="bi bi-journal-text"></i> Base de conhecimento</a>');
   $(document).on('click', '.sidebar-nav-menu', function (event) { event.stopPropagation(); $(this).closest('.sidebar-nav-dropdown').toggleClass('is-open'); });
-  $(document).on('click', () => $('.sidebar-nav-dropdown').removeClass('is-open'));
+  $(document).on('click', () => { $('.sidebar-nav-dropdown').removeClass('is-open'); $('.sidebar').removeClass('nav-open'); });
   const userId = new URLSearchParams(window.location.search).get('id') ?? window.location.pathname.match(/^\/users\/([a-f\d]{24})\/?$/i)?.[1] ?? null;
   const isEditing = Boolean(userId);
   $('#logout-button').on('click', () => { MetaFitApi.request({ method: 'POST', path: '/auth/logout' }).always(() => { MetaFitApi.clearSession(); window.location.replace('/login'); }); });

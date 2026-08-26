@@ -1,5 +1,8 @@
 $(function () {
   if (!MetaFitApi.protect()) return;
+  $('.sidebar').append('<button type="button" class="mobile-nav-toggle" aria-label="Abrir menu"><i class="bi bi-list"></i></button>');
+  $('.mobile-nav-toggle').on('click', function (event) { event.stopPropagation(); $('.sidebar').toggleClass('nav-open'); });
+  $('.sidebar-nav').on('click', 'a', () => $('.sidebar').removeClass('nav-open'));
   const escapeHtml = (value) => $('<div>').text(value ?? '').html(); let replies = []; let editingId = null;
   const modal = document.getElementById('quick-reply-modal');
   const renderCategories = () => { const selected = $('#quick-reply-category').val(); const categories = [...new Set(replies.map((item) => item.category))].sort((a, b) => a.localeCompare(b, 'pt-BR')); $('#quick-reply-category').html(`<option value="">Todas as categorias</option>${categories.map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join('')}`).val(selected); };
@@ -12,6 +15,6 @@ $(function () {
   $('#quick-replies-list').on('click', '.delete-quick-reply', function () { const id = $(this).data('id'); if (!confirm('Excluir esta resposta rápida?')) return; MetaFitApi.request({ method: 'DELETE', path: `/quick-replies/${id}` }).done(load); });
   $('#quick-reply-form').on('submit', function (event) { event.preventDefault(); const data = { title: $('#quick-reply-title').val().trim(), category: $('#quick-reply-category-input').val().trim(), content: $('#quick-reply-content').val().trim(), keywords: $('#quick-reply-keywords').val().split(',').map((item) => item.trim()).filter(Boolean) }; MetaFitApi.request({ method: editingId ? 'PATCH' : 'POST', path: editingId ? `/quick-replies/${editingId}` : '/quick-replies', data }).done(() => { bootstrap.Modal.getInstance(modal).hide(); load(); }); });
   $('#quick-reply-category').on('change', render); let timer; $('#quick-reply-search').on('input', () => { clearTimeout(timer); timer = setTimeout(load, 250); });
-  $('.sidebar-nav-menu').on('click', function (event) { event.stopPropagation(); $(this).closest('.sidebar-nav-dropdown').toggleClass('is-open'); }); $(document).on('click', () => $('.sidebar-nav-dropdown').removeClass('is-open'));
+  $('.sidebar-nav-menu').on('click', function (event) { event.stopPropagation(); $(this).closest('.sidebar-nav-dropdown').toggleClass('is-open'); }); $(document).on('click', () => { $('.sidebar-nav-dropdown').removeClass('is-open'); $('.sidebar').removeClass('nav-open'); });
   load();
 });
