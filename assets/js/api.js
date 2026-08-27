@@ -33,7 +33,20 @@ window.MetaFitApi = (() => {
     if (authenticated) {
       pendingAuthenticatedRequests += 1;
       updateLoadingOverlay();
-      operation.fail((error) => { if (error.status === 401 || error.status === 403) { clearSession(); window.location.replace('/login'); } });
+      operation.fail((error) => {
+        if (error.status === 401) {
+          clearSession();
+          window.location.replace('/login');
+          return;
+        }
+        if (error.status === 403) {
+          const alert = document.getElementById('page-alert');
+          if (alert) {
+            alert.textContent = error.responseJSON?.message || 'Você não tem permissão para concluir esta ação.';
+            alert.classList.remove('d-none');
+          }
+        }
+      });
       operation.always(() => { pendingAuthenticatedRequests = Math.max(0, pendingAuthenticatedRequests - 1); updateLoadingOverlay(); });
     }
     return operation;
