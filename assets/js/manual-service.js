@@ -1,5 +1,6 @@
 $(function () {
   if (!MetaFitApi.protect()) return;
+  $('.sidebar-nav').prepend('<a href="/"><i class="bi bi-grid-1x2"></i> Visão geral</a>');
   $('.sidebar').append('<button type="button" class="mobile-nav-toggle" aria-label="Abrir menu"><i class="bi bi-list"></i></button>');
   $('.mobile-nav-toggle').on('click', function (event) { event.stopPropagation(); $('.sidebar').toggleClass('nav-open'); });
   $('.sidebar-nav').on('click', 'a', () => $('.sidebar').removeClass('nav-open'));

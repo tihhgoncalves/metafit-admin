@@ -5,6 +5,7 @@ RewriteRule ^users\.php$ /users [R=301,L,NE]
 RewriteRule ^user\.php$ /users [R=301,L,NE]
 
 RewriteRule ^login/?$ pages/login.php [L]
+RewriteRule ^$ pages/dashboard.php [L]
 RewriteRule ^users/new/?$ pages/user.php?novo=1 [QSA,L]
 RewriteRule ^users/([a-f0-9]{24})/?$ pages/user.php?id=$1 [QSA,L,NC]
 RewriteRule ^users/?$ pages/users.php [L]
