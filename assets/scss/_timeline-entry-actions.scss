@@ -1,0 +1,32 @@
+.service-timeline > div.timeline-entry:has(.timeline-entry-actions) {
+  position: relative;
+  padding-right: 54px;
+}
+
+.timeline-entry-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+}
+
+.timeline-entry-actions .btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: .72rem;
+}
+
+.interaction-occurred-at-control {
+  margin-top: -2px;
+}
+
+.interaction-occurred-at-control .btn-link {
+  color: var(--muted);
+  font-size: .75rem;
+  text-decoration: none;
+}
