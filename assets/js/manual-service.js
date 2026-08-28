@@ -49,7 +49,8 @@ $(function () {
     selectedFollowUpId = followUp.id;
     manualRecordMode = false;
     const isReturnFromInteraction = Boolean(followUp.source_interaction_id);
-    selectedCase = { ...serviceCase, title: followUp.title, guidance: followUp.source === 'manual' || isReturnFromInteraction ? `Realize a ação “${followUp.title}” e registre o resultado.` : serviceCase.guidance, suggested_message: followUp.source === 'manual' || isReturnFromInteraction ? null : serviceCase.suggested_message, user: selectedDossier.user, follow_up: followUp };
+    const isReminder = /^(retomar|lembrete):/i.test(followUp.title);
+    selectedCase = { ...serviceCase, title: followUp.title, guidance: followUp.source === 'manual' || isReturnFromInteraction || isReminder ? `Realize a ação “${followUp.title}” e registre o resultado.` : serviceCase.guidance, suggested_message: followUp.source === 'manual' || isReturnFromInteraction || isReminder ? null : serviceCase.suggested_message, user: selectedDossier.user, follow_up: followUp };
     return true;
   };
   const renderSelectedContext = (scrollToTop = false) => { renderDossier(selectedDossier, selectedCase); if (scrollToTop) $('#case-modal-body').stop(true).animate({ scrollTop: 0 }, 240); addFollowUpActions(); addInteractionResponsible(); addAssumeAction(); decorateDossierContext(); };
